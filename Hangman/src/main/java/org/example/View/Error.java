@@ -32,5 +32,9 @@ public class Error {
     public static void printNotValidLetterError() {
         System.err.println("Кажется ты ошибся, нужно ввести \"y\" или \"n\" :)");
     }
+
+    public static void printStringIsEmptyError() {
+        System.err.println("Похоже, что ты ничего не ввел, попроуй снова!");
+    }
 }
 

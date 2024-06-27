@@ -53,8 +53,8 @@ public class Message {
 
     public static void printCategories() {
         System.out.printf("""
-                        Выбери категорию (Введи число или название категории):
-                        %s
-                        """, Model.getLineOfCategoriesDynamically());
+                Выбери категорию (Введи число или название категории):
+                %s
+                """, Model.getCategoriesOfWords(Model.getCategoriesOfWords()));
     }
 }

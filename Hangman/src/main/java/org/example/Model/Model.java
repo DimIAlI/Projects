@@ -4,17 +4,16 @@ import org.example.DTO.WordsDTO;
 import org.example.View.Error;
 import org.example.View.Message;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 
 public class Model {
 
     private static final Map<String, ArrayList<String>> COLLECTION_OF_WORDS;
     private static final String[] CATEGORIES_OF_WORDS;
-    private static Session session = new Session();
+    private static final Model INSTANCE = new Model();
+    private static final Scanner SCANNER = new Scanner(System.in);
+    private Session session;
 
     static {
         WordsDTO WordsInstance = WordsDTO.getInstance("src/main/resources/Words.JSON");
@@ -22,24 +21,15 @@ public class Model {
         CATEGORIES_OF_WORDS = COLLECTION_OF_WORDS.keySet().toArray(new String[0]);
     }
 
-    public static void run() {
-
-        boolean flag = true;
-        Message.printWelcomeMessage();
-
-        while (flag) {
-
-            chooseCategory();
-
-            startGame();
-
-            flag = endOfTheGame();
-        }
+    private Model() {
+        this.session = new Session();
     }
 
-    public static StringBuilder getLineOfCategoriesDynamically() {
+    public static String[] getCategoriesOfWords() {
+        return CATEGORIES_OF_WORDS;
+    }
 
-        String[] categories = CATEGORIES_OF_WORDS;
+    public static StringBuilder getCategoriesOfWords(String[] categories) {
 
         StringBuilder categoriesForFormat = new StringBuilder();
         int index = 1;
@@ -50,72 +40,116 @@ public class Model {
         return categoriesForFormat;
     }
 
-    private static void chooseCategory() {
-        String messageFromUser;
-        Message.printCategories();
-        do {
-            messageFromUser = Session.getMessageFromUser();
+    private static String getMessageFromUser() {
+        String line;
 
-            if (!Model.doCheckValidityCategory(messageFromUser)) {
-                Error.printSelectionError();
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        do {
+            line = SCANNER.nextLine();
+            if (line.isEmpty()) {
+                Error.printStringIsEmptyError();
             }
-        } while (!Model.doCheckValidityCategory(messageFromUser));
-        generateAsterisk();
+        } while (line.isEmpty());
+        return line;
     }
 
-    public static boolean doCheckValidityCategory(String message) {
+    public static void run() {
 
-        try {
-            int number = Integer.parseInt(message);
-            if (number < 1 || number > CATEGORIES_OF_WORDS.length) {
-                return false;
-            }
-            session.setCategory(CATEGORIES_OF_WORDS[number - 1]);
-            return true;
-        } catch (NumberFormatException e) {
-            message = makeValidCase(message);
-            if (!COLLECTION_OF_WORDS.containsKey(message)) {
-                return false;
-            }
-            session.setCategory(message);
-            return true;
+        boolean isRunning = true;
+
+        Message.printWelcomeMessage();
+
+        while (isRunning) {
+
+            INSTANCE.chooseCategory();
+            INSTANCE.startGame();
+            isRunning = INSTANCE.endOfTheGame();
+
         }
     }
 
-    private static void generateAsterisk() {
-        Message.printChosenCategory(session.getCategory(), session.getAttempt());
-        chooseRandomWord(session.getCategory());
-        initAsterisk(session.getWord());
+    private void chooseCategory() {
+        String messageFromUser;
+        Message.printCategories();
+
+        while (true) {
+
+            messageFromUser = getMessageFromUser();
+
+            if (doCheckValidityOfCategory(messageFromUser)) {
+                break;
+            }
+            Error.printSelectionError();
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        Message.printChosenCategory(session.category, session.attempt);
+        generateAsterisk();
     }
 
-    private static void startGame() {
+    private boolean doCheckValidityOfCategory(String message) {
+        try {
+            int number = Integer.parseInt(message);
+            if (number >= 1 && number <= CATEGORIES_OF_WORDS.length) {
+                session.category = CATEGORIES_OF_WORDS[number - 1];
+                return true;
+            }
+        } catch (NumberFormatException e) {
+            String validMessage = makeValidCase(message);
+            if (COLLECTION_OF_WORDS.containsKey(validMessage)) {
+                session.category = validMessage;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String makeValidCase(String word) {
+        return word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase();
+    }
+
+    private void generateAsterisk() {
+
+        chooseRandomWord(session.category);
+        initAsterisk(session.word);
+    }
+
+    public void chooseRandomWord(String category) {
+        ArrayList<String> words = COLLECTION_OF_WORDS.get(category);
+
+        session.word = words.get(new Random().nextInt(words.size()));
+
+    }
+
+    private void initAsterisk(String word) {
+        session.asterisk = "*".repeat(word.length());
+    }
+
+    private void startGame() {
         String messageFromUser;
         while (true) {
 
-            Message.printAsterisk(session.getAsterisk());
+            Message.printAsterisk(session.asterisk);
             Message.printEnterLetter();
 
             do {
-                messageFromUser = Session.getMessageFromUser();
+                messageFromUser = getMessageFromUser();
 
                 if (doCheckValidityLetter(messageFromUser)) {
 
                     if (doCheckEnteredLetter(messageFromUser)) {
 
-                        Error.printLetterAlreadyEnteredError(session.getAttempt());
+                        Error.printLetterAlreadyEnteredError(session.attempt);
 
                     } else {
 
-                        int[] matches = doCheckLetterMatch(messageFromUser, session.getWord());
+                        int[] matches = doCheckLetterMatch(messageFromUser, session.word);
                         makeAsterisk(messageFromUser, matches);
 
-                        if (doCheckWinner(session.getAsterisk(), session.getWord())) {
-                            Message.printWinner(session.getAsterisk());
+                        if (doCheckWinner(session.asterisk, session.word)) {
+                            Message.printWinner(session.asterisk);
                             return;
 
                         }
@@ -124,24 +158,24 @@ public class Model {
                 }
             } while (!doCheckEnteredLetter(messageFromUser));
 
-            if (session.getAttempt() == 0) {
-                Message.printLostMessage(session.getWord());
+            if (session.attempt == 0) {
+                Message.printLostMessage(session.word);
                 return;
 
             }
         }
     }
 
-    private static boolean doCheckWinner(String asterisk, String word) {
+    private boolean doCheckWinner(String asterisk, String word) {
         return asterisk.equals(word);
     }
 
-    private static boolean endOfTheGame() {
+    private boolean endOfTheGame() {
 
         Message.printGetAnotherTry();
 
         while (true) {
-            if (doCheckRestart(Session.getMessageFromUser())) {
+            if (doCheckRestart(getMessageFromUser())) {
                 session = new Session();
                 return true;
             }
@@ -149,7 +183,7 @@ public class Model {
         }
     }
 
-    private static boolean doCheckRestart(String messageFromUser) {
+    private boolean doCheckRestart(String messageFromUser) {
 
         while (!doCheckValidityLetter(messageFromUser)) {
 
@@ -162,7 +196,7 @@ public class Model {
                 default: {
                     while (messageFromUser.equalsIgnoreCase("y") || messageFromUser.equalsIgnoreCase("n")) {
                         Error.printNotValidLetterError();
-                        messageFromUser = Session.getMessageFromUser();
+                        messageFromUser = getMessageFromUser();
                     }
                     return false;
                 }
@@ -171,7 +205,7 @@ public class Model {
         return false;
     }
 
-    private static int[] doCheckLetterMatch(String message, String word) {
+    private int[] doCheckLetterMatch(String message, String word) {
         int counter = 0;
         int capacity = 0;
 
@@ -196,31 +230,31 @@ public class Model {
         return matches;
     }
 
-    private static void makeAsterisk(String letter, int... position) {
+    private void makeAsterisk(String letter, int... position) {
 
         makeLetterTyped(letter);
 
         if (position.length == 0) {
-            session.setAttempt(session.getAttempt() - 1);
-            Error.printLetterExistingError(session.getAttempt());
+            session.attempt = session.attempt - 1;
+            Error.printLetterExistingError(session.attempt);
 
         } else {
-            String currentAsterisk = session.getAsterisk();
+            String currentAsterisk = session.asterisk;
             StringBuilder asteriskBuilder = new StringBuilder(currentAsterisk);
             for (int i = 0; i < position.length; i++) {
                 asteriskBuilder.setCharAt(position[i], letter.charAt(0));
             }
-            session.setAsterisk(asteriskBuilder.toString());
+            session.asterisk = asteriskBuilder.toString();
         }
     }
 
-    private static void makeLetterTyped(String letter) {
+    private void makeLetterTyped(String letter) {
 
-        session.getAlreadyEnteredChars().add(letter.charAt(0));
+        session.alreadyEnteredChars.add(letter.charAt(0));
 
     }
 
-    private static boolean doCheckValidityLetter(String messageFromUser) {
+    private boolean doCheckValidityLetter(String messageFromUser) {
         if (messageFromUser.length() != 1) {
             Error.printLetterQuantityError();
 
@@ -234,37 +268,35 @@ public class Model {
         return true;
     }
 
-    private static String makeValidCase(String word) {
-        return word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase();
-    }
 
-    public static void chooseRandomWord(String category) {
-        ArrayList<String> words = COLLECTION_OF_WORDS.get(category);
-
-        String word = words.get(new Random().nextInt(words.size()));
-        session.setWord(word);
-    }
-
-    private static boolean doCheckEnteredLetter(String letter) {
-        HashSet<Character> alreadyEnteredChars = session.getAlreadyEnteredChars();
+    private boolean doCheckEnteredLetter(String letter) {
+        HashSet<Character> alreadyEnteredChars = session.alreadyEnteredChars;
         return alreadyEnteredChars.contains(letter.charAt(0));
     }
 
-    private static String initAsterisk(String word) {
-        int length = word.length();
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            builder.append("*");
-        }
-        session.setAsterisk(builder.toString());
-        return builder.toString();
 
+    private class Session {
+
+        private String category;
+        private String word;
+        private int attempt;
+        private String asterisk;
+        private ArrayList<Character> arrayOfChars;
+        private final HashSet<Character> alreadyEnteredChars;
+
+
+        private Session() {
+            attempt = 8;
+            alreadyEnteredChars = new HashSet<>();
+
+        }
     }
 
     //Исправить ошибку с UpperCase
 //е=ё
     //разобраться с upper/lower
-    //баг с вводом пустой строки - проверить на isEmpty
+    //поправить конец игры
+    //добавить категорию случайно
 }
 
 
