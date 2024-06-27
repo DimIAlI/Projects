@@ -1,15 +1,11 @@
 package org.example.View;
 
+import org.example.Model.Model;
+
 public class Message {
 
     public static void printWelcomeMessage() {
-        System.out.printf("""
-                                
-                Welcome to the Hangman!
-                        
-                Выбери категорию (Введи число или название категории):
-                %s
-                """, Draw.getLineOfCategoriesDynamically());
+        System.out.println("\nWelcome to the Hangman!\n");
 
     }
 
@@ -31,20 +27,34 @@ public class Message {
         System.out.println("Твое слово: " + line);
     }
 
-    public static void printEnterLetter(){
+    public static void printEnterLetter() {
         System.out.println("Введи букву: ");
     }
 
-
-    public static void printLostMessage() {
-        System.out.println("Ты проиграл! Попробуешь еще раз?");
+    public static void printLostMessage(String word) {
+        System.out.printf("""
+                Ты проиграл(а)!
+                Загаданным словом было "%s"
+                %n""", word);
     }
 
     public static void printGetAnotherTry() {
         System.out.println("""
                 Попробуешь еще раз?
                 (y/n):
-                
                 """);
+    }
+
+    public static void printWinner(String word) {
+        System.out.printf("""       
+                Ты угадал(а) слово: "%s"
+                %n""", word);
+    }
+
+    public static void printCategories() {
+        System.out.printf("""
+                        Выбери категорию (Введи число или название категории):
+                        %s
+                        """, Model.getLineOfCategoriesDynamically());
     }
 }

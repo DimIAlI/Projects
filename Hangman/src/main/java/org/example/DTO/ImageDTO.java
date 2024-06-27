@@ -5,16 +5,11 @@ import org.example.utils.JsonMapper;
 
 
 
-//содержит данные из JSON - отображение человека
 public class ImageDTO {
 
-    private String[] images;
-
-    public String[] getImages() {
-        return images;
-    }
-
     private static ImageDTO INSTANCE;
+
+    private String[] images;
 
     private ImageDTO() {
     }
@@ -24,6 +19,10 @@ public class ImageDTO {
             INSTANCE = JsonMapper.getFromJSON(ImageDTO.class, path);
         }
         return INSTANCE;
+    }
+
+    public String[] getImages() {
+        return images;
     }
 
 

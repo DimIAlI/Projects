@@ -1,4 +1,4 @@
-package org.example.Engine;
+package org.example.Model;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 public class Session {
 
-    private static final Scanner scanner = new Scanner(System.in);
+    private static final Scanner SCANNER = new Scanner(System.in);
     private String category;
     private String word;
     private int attempt;
@@ -14,33 +14,47 @@ public class Session {
     private ArrayList<Character> arrayOfChars;
     private final HashSet<Character> alreadyEnteredChars;
 
-    public static String getMessageFromUser() {
-        return scanner.nextLine();
-    }
-
     Session() {
         attempt = 8;
         alreadyEnteredChars = new HashSet<>();
     }
 
-    public HashSet<Character> getAlreadyEnteredChars() {
+    static String getMessageFromUser() {
+        return SCANNER.nextLine();
+    }
+
+    HashSet<Character> getAlreadyEnteredChars() {
         return alreadyEnteredChars;
     }
 
-    public String getAsterisk() {
+    String getAsterisk() {
         return asterisk;
     }
 
-    public String getCategory() {
+    String getCategory() {
         return category;
     }
 
-    public String getWord() {
+    String getWord() {
         return word;
     }
 
-    public int getAttempt() {
+    int getAttempt() {
         return attempt;
+    }
+
+    ArrayList<Character> getArrayOfChars() {
+        if (arrayOfChars == null) {
+            String hiddenWord = getWord();
+            arrayOfChars = new ArrayList<>();
+
+            char[] charArray = hiddenWord.toCharArray();
+
+            for (char c : charArray) {
+                arrayOfChars.add(c);
+            }
+        }
+        return arrayOfChars;
     }
 
     void setCategory(String category) {
@@ -59,17 +73,4 @@ public class Session {
         this.attempt = attempt;
     }
 
-    public ArrayList<Character> getArrayOfChars() {
-        if (arrayOfChars == null) {
-            String hiddenWord = getWord();
-            arrayOfChars = new ArrayList<>();
-
-            char[] charArray = hiddenWord.toCharArray();
-
-            for (char c : charArray) {
-                arrayOfChars.add(c);
-            }
-        }
-        return arrayOfChars;
-    }
 }

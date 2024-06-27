@@ -7,23 +7,30 @@ public class Error {
     }
 
     public static void printLetterAlreadyEnteredError(int attempt) {
-
         System.err.printf("Эта буква уже вводилась! У тебя все еще %d попыток!\n%n", attempt);
     }
 
     public static void printLetterExistingError(int attempt) {
+        System.err.print("Такой буквы здесь нет! ");
 
-
-            System.err.printf("Такой буквы здесь нет! У тебя осталось %d попыток!\n%n", attempt);
-            Draw.doDrawHangman(attempt);
+        if (attempt == 0) {
+            System.err.println("У тебя не осталось попыток!");
+        } else {
+            System.err.printf("У тебя осталось %d попыток!\n%n", attempt);
         }
+        Draw.doDrawHangman(attempt);
+    }
 
-        public static void printLetterQuantityError(){
+    public static void printLetterQuantityError() {
+        System.err.println("Слишком много символов, попробуй остановиться на каком-то одном!");
+    }
 
-            System.err.println("Слишком много букв, попробуй остановиться на какой-то одной!");
-        }
-        public static void printNotALetterError() {
-            System.err.println("Попробуй вводить буквы :)");
-        }
+    public static void printNotALetterError() {
+        System.err.println("Попробуй вводить буквы :)");
+    }
+
+    public static void printNotValidLetterError() {
+        System.err.println("Кажется ты ошибся, нужно ввести \"y\" или \"n\" :)");
+    }
 }
 

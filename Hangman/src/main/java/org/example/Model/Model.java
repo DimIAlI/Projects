@@ -1,8 +1,9 @@
-package org.example.Engine;
+package org.example.Model;
 
 import org.example.DTO.WordsDTO;
 import org.example.View.Error;
 import org.example.View.Message;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
@@ -15,7 +16,6 @@ public class Model {
     private static final String[] CATEGORIES_OF_WORDS;
     private static Session session = new Session();
 
-
     static {
         WordsDTO WordsInstance = WordsDTO.getInstance("src/main/resources/Words.JSON");
         COLLECTION_OF_WORDS = WordsInstance.getCategories();
@@ -23,10 +23,37 @@ public class Model {
     }
 
     public static void run() {
-        String messageFromUser;
 
+        boolean flag = true;
+        Message.printWelcomeMessage();
+
+        while (flag) {
+
+            chooseCategory();
+
+            startGame();
+
+            flag = endOfTheGame();
+        }
+    }
+
+    public static StringBuilder getLineOfCategoriesDynamically() {
+
+        String[] categories = CATEGORIES_OF_WORDS;
+
+        StringBuilder categoriesForFormat = new StringBuilder();
+        int index = 1;
+        for (String category : categories) {
+            categoriesForFormat.append(index).append(". ").append(category).append("\n");
+            index++;
+        }
+        return categoriesForFormat;
+    }
+
+    private static void chooseCategory() {
+        String messageFromUser;
+        Message.printCategories();
         do {
-            Message.printWelcomeMessage();
             messageFromUser = Session.getMessageFromUser();
 
             if (!Model.doCheckValidityCategory(messageFromUser)) {
@@ -38,20 +65,41 @@ public class Model {
                 }
             }
         } while (!Model.doCheckValidityCategory(messageFromUser));
+        generateAsterisk();
+    }
 
+    public static boolean doCheckValidityCategory(String message) {
+
+        try {
+            int number = Integer.parseInt(message);
+            if (number < 1 || number > CATEGORIES_OF_WORDS.length) {
+                return false;
+            }
+            session.setCategory(CATEGORIES_OF_WORDS[number - 1]);
+            return true;
+        } catch (NumberFormatException e) {
+            message = makeValidCase(message);
+            if (!COLLECTION_OF_WORDS.containsKey(message)) {
+                return false;
+            }
+            session.setCategory(message);
+            return true;
+        }
+    }
+
+    private static void generateAsterisk() {
         Message.printChosenCategory(session.getCategory(), session.getAttempt());
         chooseRandomWord(session.getCategory());
-
         initAsterisk(session.getWord());
+    }
 
-
-        while (session.getAttempt() != 0) {
-
+    private static void startGame() {
+        String messageFromUser;
+        while (true) {
 
             Message.printAsterisk(session.getAsterisk());
             Message.printEnterLetter();
 
-            //первый цикл ввода и валидации значения
             do {
                 messageFromUser = Session.getMessageFromUser();
 
@@ -65,36 +113,63 @@ public class Model {
 
                         int[] matches = doCheckLetterMatch(messageFromUser, session.getWord());
                         makeAsterisk(messageFromUser, matches);
+
+                        if (doCheckWinner(session.getAsterisk(), session.getWord())) {
+                            Message.printWinner(session.getAsterisk());
+                            return;
+
+                        }
+
                     }
                 }
             } while (!doCheckEnteredLetter(messageFromUser));
 
             if (session.getAttempt() == 0) {
-
-                endOfTheGame();
+                Message.printLostMessage(session.getWord());
+                return;
 
             }
         }
     }
 
-    private static void endOfTheGame() {
+    private static boolean doCheckWinner(String asterisk, String word) {
+        return asterisk.equals(word);
+    }
 
-        Message.printLostMessage();
+    private static boolean endOfTheGame() {
 
         Message.printGetAnotherTry();
 
         while (true) {
             if (doCheckRestart(Session.getMessageFromUser())) {
-                run();
+                session = new Session();
+                return true;
             }
-            break;
+            return false;
         }
     }
 
     private static boolean doCheckRestart(String messageFromUser) {
 
-  return true;  }
+        while (!doCheckValidityLetter(messageFromUser)) {
 
+            switch (messageFromUser.toUpperCase()) {
+
+                case "Y":
+                    return true;
+                case "N":
+                    return false;
+                default: {
+                    while (messageFromUser.equalsIgnoreCase("y") || messageFromUser.equalsIgnoreCase("n")) {
+                        Error.printNotValidLetterError();
+                        messageFromUser = Session.getMessageFromUser();
+                    }
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
 
     private static int[] doCheckLetterMatch(String message, String word) {
         int counter = 0;
@@ -121,7 +196,6 @@ public class Model {
         return matches;
     }
 
-
     private static void makeAsterisk(String letter, int... position) {
 
         makeLetterTyped(letter);
@@ -140,7 +214,6 @@ public class Model {
         }
     }
 
-
     private static void makeLetterTyped(String letter) {
 
         session.getAlreadyEnteredChars().add(letter.charAt(0));
@@ -150,6 +223,7 @@ public class Model {
     private static boolean doCheckValidityLetter(String messageFromUser) {
         if (messageFromUser.length() != 1) {
             Error.printLetterQuantityError();
+
             return false;
         }
         char letter = messageFromUser.charAt(0);
@@ -160,35 +234,8 @@ public class Model {
         return true;
     }
 
-    public static String[] getCollectionOfWords() {
-        return CATEGORIES_OF_WORDS;
-    }
-
-    public static boolean doCheckValidityCategory(String message) {
-
-        try {
-            int number = Integer.parseInt(message);
-            if (number < 1 || number > CATEGORIES_OF_WORDS.length) {
-                return false;
-            }
-            session.setCategory(CATEGORIES_OF_WORDS[number - 1]);
-            return true;
-        } catch (NumberFormatException e) {
-            message = makeValidCase(message);
-            if (!COLLECTION_OF_WORDS.containsKey(message)) {
-                return false;
-            }
-            session.setCategory(message);
-            return true;
-        }
-    }
-
     private static String makeValidCase(String word) {
         return word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase();
-    }
-
-    public static Session getSession() {
-        return session;
     }
 
     public static void chooseRandomWord(String category) {
@@ -197,7 +244,6 @@ public class Model {
         String word = words.get(new Random().nextInt(words.size()));
         session.setWord(word);
     }
-
 
     private static boolean doCheckEnteredLetter(String letter) {
         HashSet<Character> alreadyEnteredChars = session.getAlreadyEnteredChars();
@@ -215,13 +261,10 @@ public class Model {
 
     }
 
-    private static boolean doCheckLetter(String letter) {
-        return session.getArrayOfChars().contains(letter);
-    }
-
-
-// исправить отрисовку челика (изменить кол-во ошибок)
     //Исправить ошибку с UpperCase
+//е=ё
+    //разобраться с upper/lower
+    //баг с вводом пустой строки - проверить на isEmpty
 }
 
 
