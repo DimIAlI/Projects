@@ -47,7 +47,7 @@ public class Message {
 
     public static void printWinner(String word) {
         System.out.printf("""       
-                Ты угадал(а) слово: "%s"
+                Ты разгадал(а) слово "%s!"
                 %n""", word);
     }
 
@@ -56,5 +56,9 @@ public class Message {
                 Выбери категорию (Введи число или название категории):
                 %s
                 """, Model.getCategoriesOfWords(Model.getCategoriesOfWords()));
+    }
+
+    public static void printByeMessage() {
+        System.out.println("Good bye!");
     }
 }
