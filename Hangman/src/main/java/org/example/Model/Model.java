@@ -41,9 +41,7 @@ public class Model {
     }
 
     private static String getMessageFromUser() {
-
         return SCANNER.nextLine();
-
     }
 
     public static void run() {
@@ -150,6 +148,7 @@ public class Model {
 
 
             int[] matches = doCheckLetterMatches(messageFromUser, session.word);
+
             makeAsterisk(messageFromUser, matches);
 
             if (hasWinner(session.asterisk, session.word)) {
@@ -208,12 +207,11 @@ public class Model {
                 counter++;
             }
         }
+        makeLetterTyped(message);
         return matches;
     }
 
     private void makeAsterisk(String letter, int... position) {
-
-        makeLetterTyped(letter);
 
         if (position.length == 0) {
             session.attempt -= 1;
@@ -258,10 +256,10 @@ public class Model {
             while (!isLetterValid(messageFromUser)) {
                 messageFromUser = getMessageFromUser();
             }
-            switch (messageFromUser.toUpperCase()) {
-                case "Y":
+            switch (messageFromUser.toLowerCase()) {
+                case "y":
                     return true;
-                case "N":
+                case "n":
                     return false;
                 default:
                     Error.printNotValidLetterError();
