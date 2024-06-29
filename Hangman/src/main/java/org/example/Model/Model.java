@@ -118,7 +118,6 @@ public class Model {
         if (category.equals("Случайная")) {
             int randomCategory = new Random().nextInt(1, CATEGORIES_OF_WORDS.length);
             category = CATEGORIES_OF_WORDS[randomCategory];
-            session.category = category;
         }
 
         ArrayList<String> words = COLLECTION_OF_WORDS.get(category);
