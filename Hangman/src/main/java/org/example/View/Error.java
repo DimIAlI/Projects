@@ -36,5 +36,9 @@ public class Error {
     public static void printStringIsEmptyError() {
         System.err.println("Похоже, что ты ничего не ввел, попроуй снова!");
     }
+
+    public static void printNotACyrillicError() {
+        System.err.println("Похоже, что ты пытаешься использовать не тот алфавит :)");
+    }
 }
 

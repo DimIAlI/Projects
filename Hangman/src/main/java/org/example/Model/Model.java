@@ -72,9 +72,10 @@ public class Model {
         }
         while (!isValid);
 
-        Message.printChosenCategory(session.category, session.attempt);
+        chooseRandomWord(session.category);
+        initAsterisk(session.word);
 
-        generateAsterisk();
+        Message.printChosenCategory(session.category, session.attempt);
     }
 
     private boolean isCategoryValid(String message) {
@@ -112,11 +113,6 @@ public class Model {
         return word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase();
     }
 
-    private void generateAsterisk() {
-        chooseRandomWord(session.category);
-        initAsterisk(session.word);
-    }
-
     public void chooseRandomWord(String category) {
 
         if (category.equals("Случайная")) {
@@ -144,7 +140,7 @@ public class Model {
 
             do {
                 messageFromUser = getMessageFromUser();
-            } while (!isLetterValid(messageFromUser) || isLetterAlreadyEntered(messageFromUser));
+            } while (isLetterInvalid(messageFromUser) || isLetterAlreadyEntered(messageFromUser) || !isCyrillicLetter(messageFromUser));
 
 
             int[] matches = doCheckLetterMatches(messageFromUser, session.word);
@@ -162,21 +158,21 @@ public class Model {
         }
     }
 
-    private boolean isLetterValid(String messageFromUser) {
+    private boolean isLetterInvalid(String messageFromUser) {
 
         if (isEmpty(messageFromUser)) {
-            return false;
+            return true;
         }
         if (messageFromUser.length() != 1) {
             Error.printLetterQuantityError();
-            return false;
+            return true;
         }
         char letter = messageFromUser.charAt(0);
         if (!Character.isLetter(letter)) {
             Error.printNotALetterError();
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private boolean isLetterAlreadyEntered(String letter) {
@@ -188,13 +184,21 @@ public class Model {
         return false;
     }
 
+    private boolean isCyrillicLetter(String message) {
+        if (Character.UnicodeBlock.of(message.charAt(0)) != Character.UnicodeBlock.CYRILLIC) {
+            Error.printNotACyrillicError();
+            return false;
+        }
+        return true;
+    }
+
     private int[] doCheckLetterMatches(String message, String word) {
 
-        char letter = message.charAt(0);
         int capacity = 0;
+        char letter = Character.toLowerCase(message.charAt(0));
 
         for (int i = 0; i < word.length(); i++) {
-            if (word.charAt(i) == letter) {
+            if (letter == Character.toLowerCase(word.charAt(i))) {
                 capacity++;
             }
         }
@@ -202,7 +206,7 @@ public class Model {
 
         int counter = 0;
         for (int i = 0; i < word.length(); i++) {
-            if (word.charAt(i) == letter) {
+            if (letter == Character.toLowerCase(word.charAt(i))) {
                 matches[counter] = i;
                 counter++;
             }
@@ -211,26 +215,26 @@ public class Model {
         return matches;
     }
 
-    private void makeAsterisk(String letter, int... position) {
+    private void makeLetterTyped(String letter) {
+        session.alreadyEnteredChars.add(letter.toLowerCase().charAt(0));
+        session.alreadyEnteredChars.add(letter.toUpperCase().charAt(0));
+    }
 
-        if (position.length == 0) {
+    private void makeAsterisk(String letter, int[] positions) {
+
+        if (positions.length == 0) {
             session.attempt -= 1;
             Error.printLetterExistingError(session.attempt);
-
         } else {
             String currentAsterisk = session.asterisk;
             StringBuilder asteriskBuilder = new StringBuilder(currentAsterisk);
-            for (int i = 0; i < position.length; i++) {
-                asteriskBuilder.setCharAt(position[i], letter.charAt(0));
+            char charToReplace = letter.charAt(0);
+
+            for (int position : positions) {
+                asteriskBuilder.setCharAt(position, position == 0 ? Character.toUpperCase(charToReplace) : Character.toLowerCase(charToReplace));
             }
             session.asterisk = asteriskBuilder.toString();
         }
-    }
-
-    private void makeLetterTyped(String letter) {
-
-        session.alreadyEnteredChars.add(letter.charAt(0));
-
     }
 
     private boolean hasWinner(String asterisk, String word) {
@@ -253,7 +257,7 @@ public class Model {
 
         while (true) {
 
-            while (!isLetterValid(messageFromUser)) {
+            while (isLetterInvalid(messageFromUser)) {
                 messageFromUser = getMessageFromUser();
             }
             switch (messageFromUser.toLowerCase()) {
@@ -268,13 +272,12 @@ public class Model {
         }
     }
 
-    private class Session {
+    private static class Session {
 
         private String category;
         private String word;
         private int attempt;
         private String asterisk;
-        private ArrayList<Character> arrayOfChars;
         private final HashSet<Character> alreadyEnteredChars;
 
 
